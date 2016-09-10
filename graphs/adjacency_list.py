@@ -83,5 +83,68 @@ class TestCycleCheckUndirected(unittest.TestCase):
         self.assertFalse(cycle_check_undirected(graph))
 
 
+def cycle_check_directed(graph, node=0, first_node=True, visited_nodes=None, dead_ends=None):
+    """Returns true if a directed graph given by an adjacency list has a cycle
+    """
+    if visited_nodes is None:
+        visited_nodes = []
+        dead_ends = []
+
+    # recursively do a depth first search for a node that has been visited before
+    if node in visited_nodes and node not in dead_ends:
+        # found a cycle
+        return True
+    visited_nodes.append(node)
+    for next_node in graph[node]:
+        has_cycle = cycle_check_directed(graph, next_node, False, visited_nodes, dead_ends)
+        if has_cycle:
+            return True
+
+    # If all the connections have been searched, but no cycle was found
+    # then this node cannot be part of a cycle. It should stay in
+    # visited_nodes so it's not searched again, but it should be
+    # excluded from the test that a graph contains a cycle
+    dead_ends.append(node)
+
+    # It's possible the whole graph hasn't been searched yet, so search any unvisited nodes
+    if first_node and len(visited_nodes) < len(graph):
+        for next_node in range(len(graph)):
+            if next_node not in visited_nodes:
+                has_cycle = cycle_check_directed(graph, next_node, False, visited_nodes, dead_ends)
+                if has_cycle:
+                    return True
+    return False
+
+
+class TestCycleCheckDirected(unittest.TestCase):
+    def test_no_cycle(self):
+        graph = [[1,2],
+                [2],
+                []]
+        self.assertFalse(cycle_check_directed(graph))
+
+    def test_has_cycle(self):
+        graph = [[1,2],
+                [2],
+                [0]]
+        self.assertTrue(cycle_check_directed(graph))
+
+    def test_disconnected_no_cycle(self):
+        graph = [[1],
+                [2],
+                [],
+                [4],
+                []]
+        self.assertFalse(cycle_check_directed(graph))
+
+    def test_disconnected_with_cycle(self):
+        graph = [[1],
+                [2],
+                [],
+                [4],
+                [3]]
+        self.assertTrue(cycle_check_directed(graph))
+
+
 if __name__ == "__main__":
     unittest.main()
