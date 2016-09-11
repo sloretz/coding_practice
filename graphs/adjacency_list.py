@@ -146,5 +146,87 @@ class TestCycleCheckDirected(unittest.TestCase):
         self.assertTrue(cycle_check_directed(graph))
 
 
+def classic_depth_first_search(graph):
+    """Classic depth first search to build forest of DFS trees
+    
+    Implemented from some lecture notes which probably copied the psuedo code from Introduction to Algorithms
+    http://www.personal.kent.edu/~rmuhamma/Algorithms/MyAlgorithms/GraphAlgor/depthSearch.htm
+    
+    Returns 3-tuple with lists (parents, discover_times, end_times)
+        parents: list of the node from which a node was discovered
+        discover_times: list of the time a node was discovered (integer time starting from zero)
+        finish_times: list of the time a node was finished being explored
+    """
+    # Colors { undiscovered: 0, discovered: 1, finished: 2 }
+    colors = [ 0 for node in graph ]
+    # Parent is None if the node is the root of a dfs tree
+    parents = [ None for node in graph ]
+    discover_times = [ None for node in graph ]
+    finish_times = [ None for node in graph ]
+    time = 0
+    dfs_state = {'graph': graph, 'colors': colors, 'parents': parents, 'time': time, 'discover_times': discover_times, 'finish_times': finish_times}
+
+    for node in range(len(graph)):
+        if 0 == colors[node]:
+            classic_depth_first_search_visit(node, dfs_state)
+
+    return (parents, discover_times, finish_times)
+
+
+def classic_depth_first_search_visit(node, dfs_state):
+    """Visits a node during classic depth first search,
+    doesn't return anything, passes everything around in dfs_state"""
+    dfs_state['colors'][node] = 1
+    dfs_state['time'] += 1
+    dfs_state['discover_times'][node] = dfs_state['time']
+    for adjacent_node in dfs_state['graph'][node]:
+        if 0 == dfs_state['colors'][adjacent_node]:
+            dfs_state['parents'][adjacent_node] = node
+            classic_depth_first_search_visit(adjacent_node, dfs_state)
+    dfs_state['colors'][node] = 2
+    dfs_state['time'] += 1
+    dfs_state['finish_times'][node] = dfs_state['time']
+
+
+class TestClassicDepthFirstSearch(unittest.TestCase):
+    def test_line(self):
+        graph = [[1],
+                [2],
+                []]
+        expected_parents = [None, 0, 1]
+        expected_discover_times = [1, 2, 3]
+        expected_finish_times = [6, 5, 4]
+        parents, discover_times, finish_times = classic_depth_first_search(graph)
+        self.assertEqual(expected_parents, parents)
+        self.assertEqual(expected_discover_times, discover_times)
+        self.assertEqual(expected_finish_times, finish_times)
+
+    def test_triangle(self):
+        graph = [[1],
+                [2],
+                [0]]
+        expected_parents = [None, 0, 1]
+        expected_discover_times = [1, 2, 3]
+        expected_finish_times = [6, 5, 4]
+        parents, discover_times, finish_times = classic_depth_first_search(graph)
+        self.assertEqual(expected_parents, parents)
+        self.assertEqual(expected_discover_times, discover_times)
+        self.assertEqual(expected_finish_times, finish_times)
+
+    def test_forest(self):
+        graph = [[1,2],
+                [2],
+                [],
+                [4],
+                [3]]
+        expected_parents = [None, 0, 1, None, 3]
+        expected_discover_times = [1, 2, 3, 7, 8]
+        expected_finish_times = [6, 5, 4, 10, 9]
+        parents, discover_times, finish_times = classic_depth_first_search(graph)
+        self.assertEqual(expected_parents, parents)
+        self.assertEqual(expected_discover_times, discover_times)
+        self.assertEqual(expected_finish_times, finish_times)
+
+
 if __name__ == "__main__":
     unittest.main()
